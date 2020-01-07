@@ -1,39 +1,38 @@
 import pandas as pd
-import numpy as np
 import pdb
 from tabulate import tabulate
+import colorama
 
+colorama.init()
 
-class df_heatmap:
+class DFCS:
 
     def __init__(self, data):
 
-        self.data = data.astype(float)
+        self.data = data
         self.result_df = pd.DataFrame(index=data.index)
-#         self.color_theme = color_theme
-#         self.tablefmt = tablefmt
 
         background_index = list(range(40, 48))
         background_index.extend(list(range(100, 108)))
 
         self.background_dict = dict(
             list(zip([
-                "Black",
-                "Red",
-                "Green",
-                "Yellow",
-                "Blue",
-                "Magenta",
-                "Cyan",
-                "Lightgray",
-                "Darkgray",
-                "Lightred",
-                "Lightgreen",
-                "Lightyellow",
-                "Lightblue",
-                "Lightmagenta",
-                "Lightcyan",
-                "White"
+                'Black',
+                'Red',
+                'Green',
+                'Yellow',
+                'Blue',
+                'Magenta',
+                'Cyan',
+                'Lightgray',
+                'Darkgray',
+                'Lightred',
+                'Lightgreen',
+                'Lightyellow',
+                'Lightblue',
+                'Lightmagenta',
+                'Lightcyan',
+                'White'
             ],
                 background_index
             )
@@ -45,62 +44,84 @@ class df_heatmap:
 
         self.font_color_dict = dict(
             list(zip([
-                "Red",
-                "Green",
-                "Yellow",
-                "Blue",
-                "Magenta",
-                "Cyan",
-                "Lightgray",
-                "Darkgray",
-                "Lightred",
-                "Lightgreen",
-                "Lightyellow",
-                "Lightblue",
-                "Lightmagenta",
-                "Lightcyan",
-                "White"
+                'Black',
+                'Red',
+                'Green',
+                'Yellow',
+                'Blue',
+                'Magenta',
+                'Cyan',
+                'Lightgray',
+                'Darkgray',
+                'Lightred',
+                'Lightgreen',
+                'Lightyellow',
+                'Lightblue',
+                'Lightmagenta',
+                'Lightcyan',
+                'White'
             ],
                 font_color_index
             ))
         )
 
         self.color_range_dict = {
-            "Green-Red": {
-                1: "Green",
-                2: "Lightgreen",
-                3: "Yellow",
-                4: "Lightred",
-                5: "Red"
+            'Green-Red': {
+                1: 'Green',
+                2: 'Lightgreen',
+                3: 'Yellow',
+                4: 'Lightmagenta',
+                5: 'Lightred'
+#                 4: 'Lightred',
+#                 5: 'Red'
             },
 
-            "Blue-Red": {
-                1: "Lightblue",
-                2: "Lightcyan",
-                3: "Yellow",
-                4: "Lightmagenta",
-                5: "Lightred"
+            'Blue-Red': {
+                1: 'Lightblue',
+                2: 'Lightcyan',
+                3: 'Yellow',
+                4: 'Lightmagenta',
+                5: 'Lightred'
+#                 4: 'Lightred',
+#                 5: 'Red'
             }
         }
 
         self.prefix = '\033['
 
-    def _set_color(self,color_target='font', color_theme='Blue-Red', tablefmt='grid'):
+    def outputdf(self,color_target='font', color_theme='Blue-Red', tablefmt='grid',each_column=True):
+
+        try:
+            self.data = self.data.astype(float)
+
+        except:
+            return print("Error")
 
         if color_target=='font':
             color_set = self.font_color_dict
+            infix = 'm'
+
         elif color_target=='background':
             color_set = self.background_dict
+            infix = ';30m'
+
+        suffix = '\x1b[0m'
+
+        if each_column==False:
+            target_range = self.data.max().max() - self.data.min().min()
+
+            step = target_range*0.2
+            target_base = self.data.min().min()
 
         for target_column in self.data.columns:
 
-#             print('-----------',target_column,'-----------')
             target_sr = self.data[target_column]
 
-            target_range = target_sr.max() - target_sr.min()
+            if each_column:
+                target_range = target_sr.max() - target_sr.min()
 
-            step = target_range*0.2
-            target_base = target_sr.min()
+                step = target_range*0.2
+                target_base = target_sr.min()
 
             result_sr = pd.Series()
 
@@ -119,24 +140,15 @@ class df_heatmap:
                     threshold_lower = target_base + step * lower
                     threshold_upper = target_base + step * upper
 
-#                 print('lower:', threshold_lower)
-#                 print('upper:', threshold_upper, '\n')
-
-#                 pdb.set_trace()
                 target_color_theme = \
                     color_set[self.color_range_dict[color_theme][x]]
 
                 result_part_sr = target_sr[(target_sr >= threshold_lower) &
                                            (target_sr <= threshold_upper)]
 
-#                 print('base',result_part_sr)
-#                 print('str',str(result_part_sr.astype(float)))
-#                 print('-------------------------------')
-
                 result_part_sr = self.prefix + \
                     str(target_color_theme) + \
-                    "m" + result_part_sr.astype(str) + "\x1b[0m"
-#                     "m" + str(result_part_sr.astype(float)) + "\x1b[0m"
+                    infix + result_part_sr.astype(str) + suffix
 
                 result_sr = pd.concat(
                     [result_sr, result_part_sr], sort=False)
